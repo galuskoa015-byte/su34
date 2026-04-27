@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Интерактивная книга: Су-34</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: #f3f4f6;
+      background:
+        linear-gradient(rgba(5, 8, 15, 0.88), rgba(5, 8, 15, 0.94)),
+        url("https://topwar.ru/uploads/posts/2020-02/1582842009_su-34-vzlet.jpg") center/cover fixed;
+    }
+
+    .app {
+      width: min(1120px, 94vw);
+      margin: 0 auto;
+      padding: 28px 0 50px;
+    }
+
+    .hero, .panel, .card {
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 24px;
+      background: rgba(10, 15, 25, .84);
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .hero { padding: 26px; }
+
+    
+    .audio-status {
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      z-index: 9999;
+      max-width: 360px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #dbeafe;
+      border: 1px solid rgba(251,191,36,.35);
+      font-size: 13px;
+      line-height: 1.35;
+      box-shadow: 0 8px 22px rgba(0,0,0,.35);
+    }
+
+    .clever-tag {
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      z-index: 9999;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      color: #fbbf24;
+      font-weight: 800;
+      letter-spacing: .8px;
+      border: 1px solid rgba(251,191,36,.45);
+      box-shadow: 0 8px 22px rgba(0,0,0,.35);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 58px);
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #cbd5e1;
+      font-size: 18px;
+      line-height: 1.55;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .card img, .scene-image {
+      width: 100%;
+      height: 230px;
+      object-fit: cover;
+      display: block;
+      background: #111827;
+    }
+
+    .card-body, .panel-body { padding: 18px; }
+
+    h2 { margin: 0 0 8px; font-size: 24px; }
+    h3 { margin: 18px 0 8px; }
+
+    p {
+      color: #d1d5db;
+      line-height: 1.58;
+      margin: 0 0 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #0f172a;
+      background: #fbbf24;
+      transition: transform .15s ease, filter .15s ease;
+    }
+
+    button:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    .secondary { color: #f8fafc; background: #334155; }
+    .danger { color: #fff; background: #b91c1c; }
+
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .choice {
+      text-align: left;
+      color: #e5e7eb;
+      background: rgba(51, 65, 85, .95);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .choice strong { display: block; color: #fff; margin-bottom: 4px; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 22px 0 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, .9);
+      border: 1px solid rgba(255,255,255,.16);
+      color: #dbeafe;
+      font-size: 14px;
+    }
+
+    .stats {
+      display: none;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .stat {
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(2, 6, 23, .7);
+      border: 1px solid rgba(255,255,255,.1);
+    }
+
+    .stat span { display: block; color: #94a3b8; font-size: 13px; margin-bottom: 4px; }
+    .stat b { font-size: 18px; }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    .phase {
+      padding: 10px 8px;
+      border-radius: 14px;
+      text-align: center;
+      color: #94a3b8;
+      background: rgba(15,23,42,.75);
+      border: 1px solid rgba(255,255,255,.09);
+      font-size: 13px;
+    }
+
+    .phase.active {
+      color: #111827;
+      background: #fbbf24;
+      font-weight: 700;
+    }
+
+    .radio-box {
+      margin: 16px 0;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(2, 6, 23, .78);
+      border: 1px solid rgba(251, 191, 36, .35);
+      color: #dbeafe;
+      line-height: 1.5;
+    }
+
+    .radio-box b { color: #fbbf24; }
+
+    .log {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(15,23,42,.72);
+      border: 1px solid rgba(255,255,255,.1);
+      color: #cbd5e1;
+    }
+
+    .ending-title {
+      font-size: clamp(28px, 4vw, 44px);
+      margin: 0 0 8px;
+    }
+
+    .ending-good { color: #86efac; }
+    .ending-mid { color: #fde68a; }
+    .ending-bad { color: #fca5a5; }
+
+    .footer-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+
+    @media (max-width: 850px) {
+      .grid, .choices, .stats, .timeline { grid-template-columns: 1fr; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="clever-tag">BY CLEVER</div>
+  <div id="audioStatus" class="audio-status">Звук: нажмите по игре для активации</div>
+  <main class="app">
+    <section class="hero">
+      <h1>Интерактивная книга: Су-34</h1>
+      <p class="subtitle">
+        Формат: брифинг → взлёт → маршрут → контакт → радиопереговоры → последствия → посадка → разбор.
+        Это художественная игра-книга, а не инструкция по реальным действиям.
+      </p>
+    </section>
+
+    <div id="game"></div>
+  </main>
+
+  <script>
+    const images = {
+      takeoff: "https://i.ytimg.com/vi/kQ2TJ2gfANk/maxresdefault.jpg?sqp=-oaymwEmCIAKENAF8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGGUgVChKMA8=&rs=AOn4CLDcmJeYdJI-iS6bY_KCawxOV9R2Ow",
+      takeoff2: "https://topwar.ru/uploads/posts/2020-02/1582842009_su-34-vzlet.jpg",
+      damaged: "http://cdn.iz.ru/sites/default/files/styles/900x506/public/news-2019-09/image%20copy.jpg?itok=3r-hTkFy",
+      damaged2: "https://i.ytimg.com/vi/MTdriUbD6F8/maxresdefault.jpg",
+      flares: "https://avatars.mds.yandex.net/i?id=9bf15d33b14411f76a5c1485338e8219eaeae49e-8191765-images-thumbs&n=13",
+      flares2: "https://avatars.mds.yandex.net/i?id=8747fffaf601f48f004118a4dbfba145c527495d-4535697-images-thumbs&n=13",
+      drop: "https://avatars.mds.yandex.net/i?id=13e91d4efaaa08253732c368cba093967ce4970d-10122207-images-thumbs&n=13",
+      drop2: "https://avatars.mds.yandex.net/i?id=4586c24bdce5d9555006cac1211328998ac72bee-5896701-images-thumbs&n=13",
+      patriot: "https://avatars.mds.yandex.net/i?id=990f208e963aa328647861509236adbd_l-5629755-images-thumbs&n=13",
+      buk: "https://topwar.ru/uploads/posts/2022-03/buk-mh17.jpg",
+      stinger: "https://topwar.ru/uploads/posts/2023-07/fim-92-2.jpg",
+      destroyed: "https://avatars.mds.yandex.net/i?id=9257bcec0667aa99c2d71a04fdac5ac4_l-4390935-images-thumbs&n=13",
+      destroyed2: "https://avatars.mds.yandex.net/i?id=37c68244382d0082501672f5cd7f689f_l-5235718-images-thumbs&n=13",
+      success: "https://cdnstatic.rg.ru/uploads/images/2025/02/19/2025-02-19_20-26-33_a1f.png",
+      success2: "https://i.ytimg.com/vi/LaB5bIZ2JwI/maxresdefault.jpg?sqp=-oaymwEmCIAKENAF8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGGUgZShlMA8=&rs=AOn4CLCHwTk964-pqsnb8hHECjRNMkRU2w",
+      belly: "https://i.ytimg.com/vi/voW8dh4HDIc/hqdefault.jpg",
+      landing1: "https://avatars.mds.yandex.net/i?id=6a99eea7c35c8c838008905bebcefae0743deaeb-4578697-images-thumbs&n=13",
+      landing2: "https://avatars.mds.yandex.net/i?id=eaee1338c2dfaf1e48a20f9a642f3978d297af37-3096790-images-thumbs&n=13",
+      landing3: "https://avatars.mds.yandex.net/i?id=afb434dcaa1f1ef8397ed1cc08b5aab669521f1a-4793210-images-thumbs&n=13"
+    };
+
+    const audio = {
+      menuMusic: new Audio("https://drive.google.com/uc?export=download&id=1iJANTiVJe_r8o891lL4Mevce0u4ugwvM"),
+      takeoffLanding: new Audio("https://drive.google.com/uc?export=download&id=1ze2ASRm2eQjhy7fkHjaXp51WM3skRFGn"),
+      failure: new Audio("https://drive.google.com/uc?export=download&id=1WvXcTbxqD4VePN3c-tkww7I35ScSUoq1"),
+      missile: new Audio("https://drive.google.com/uc?export=download&id=1wVXgSQUimb-tLy3mYwyh80H4c5TiEG2J"),
+      radioTalk: new Audio("https://drive.google.com/uc?export=download&id=1vNm8cemgKrH_S0C60KHzSD-r_jYW21il")
+    };
+
+    let audioUnlocked = false;
+    let currentSoundName = null;
+
+    const audioNamesRu = {
+      menuMusic: "музыка меню",
+      takeoffLanding: "взлёт/посадка",
+      failure: "отказ",
+      missile: "пуск",
+      radioTalk: "разговор экипажа"
+    };
+
+    Object.values(audio).forEach(sound => {
+      sound.preload = "auto";
+      sound.loop = true;
+      sound.volume = 0.9;
+      sound.crossOrigin = "anonymous";
+    });
+
+    function setAudioStatus(text) {
+      const box = document.getElementById("audioStatus");
+      if (box) box.textContent = text;
+      console.log(text);
+    }
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      setAudioStatus("Звук: активирован, загружаю треки...");
+
+      const silentTests = Object.entries(audio).map(([name, sound]) => {
+        sound.muted = true;
+        return sound.play()
+          .then(() => {
+            sound.pause();
+            sound.currentTime = 0;
+            sound.muted = false;
+          })
+          .catch(err => {
+            sound.muted = false;
+            console.warn("Не удалось подготовить звук:", name, err);
+          });
+      });
+
+      Promise.allSettled(silentTests).then(() => {
+        setAudioStatus("Звук: активирован. Если музыки нет — Google Drive блокирует MP3.");
+        handlePhaseAudio();
+      });
+    }
+
+    document.addEventListener("click", unlockAudio, { once: true });
+    document.addEventListener("touchstart", unlockAudio, { once: true });
+
+    function stopAllSounds() {
+      Object.values(audio).forEach(sound => {
+        sound.pause();
+        sound.currentTime = 0;
+      });
+      currentSoundName = null;
+    }
+
+    function playSound(name) {
+      const sound = audio[name];
+      if (!sound) return;
+
+      if (!audioUnlocked) {
+        setAudioStatus("Звук: нажмите по игре для активации");
+        return;
+      }
+
+      if (currentSoundName === name && !sound.paused) return;
+
+      stopAllSounds();
+      currentSoundName = name;
+      sound.loop = true;
+      sound.muted = false;
+      sound.volume = 0.9;
+      sound.currentTime = 0;
+
+      const label = audioNamesRu[name] || name;
+      setAudioStatus("Звук: запускаю — " + label);
+
+      sound.play()
+        .then(() => setAudioStatus("Звук играет: " + label))
+        .catch(err => {
+          setAudioStatus("Звук не запустился: " + label + ". Вероятно, Google Drive не отдаёт прямой MP3.");
+          console.error("Ошибка звука", name, err, sound.src);
+        });
+    }
+
+    function handlePhaseAudio() {
+      if (!audioUnlocked) return;
+
+      if (state.phase === "menu") {
+        playSound("menuMusic");
+        return;
+      }
+
+      if (state.phase === "takeoff" || state.phase === "landing") {
+        playSound("takeoffLanding");
+        return;
+      }
+
+      if (state.phase === "contact") {
+        playSound("missile");
+        return;
+      }
+
+      if (state.phase === "radio") {
+        playSound("radioTalk");
+        return;
+      }
+
+      if (state.hull <= 55) {
+        playSound("failure");
+        return;
+      }
+
+      stopAllSounds();
+      setAudioStatus("Звук: на этом этапе тишина");
+    }
+
+    const phaseNames = {
+      briefing: "Брифинг",
+      takeoff: "Взлёт",
+      route: "Маршрут",
+      contact: "Контакт",
+      radio: "Радио",
+      consequences: "Последствия",
+      landing: "Посадка",
+      debriefing: "Разбор"
+    };
+
+    const phaseOrder = ["briefing", "takeoff", "route", "contact", "radio", "consequences", "landing", "debriefing"];
+
+    const missions = {
+      forest: {
+        title: "Миссия 1: Лесополоса",
+        short: "Лесополоса",
+        image: images.takeoff,
+        intro: "В районе лесополосы замечена условная цель. Нужно выполнить задачу и вернуться.",
+        threat: "На выходе экипаж замечает ближнюю угрозу. Времени на решение мало.",
+        threatImage: images.stinger,
+        landingImage: images.landing1
+      },
+      factory: {
+        title: "Миссия 2: Завод",
+        short: "Завод",
+        image: images.takeoff2,
+        intro: "Промышленный объект находится в глубине карты. Обстановка сложная, а окно для действия короткое.",
+        threat: "Система предупреждения сообщает о дальней угрозе. Нужно не задерживаться в районе.",
+        threatImage: images.patriot,
+        landingImage: images.landing2
+      },
+      warehouse: {
+        title: "Миссия 3: Склад",
+        short: "Склад",
+        image: images.drop2,
+        intro: "Склад прикрыт неизвестными средствами. Главная задача — не потерять инициативу и сохранить борт.",
+        threat: "Появляется угроза средней дальности. Экипажу нужен грамотный отход.",
+        threatImage: images.buk,
+        landingImage: images.landing3
+      }
+    };
+
+    const endings = {
+      perfect: {
+        title: "Чистое выполнение",
+        className: "ending-good",
+        image: images.success,
+        text: "Задача выполнена, экипаж вернулся спокойно. В разборе отмечают выдержку, грамотное управление риском и отсутствие лишней бравады."
+      },
+      hard: {
+        title: "Опасный успех",
+        className: "ending-mid",
+        image: images.flares,
+        text: "Миссия засчитана, но несколько решений были слишком рискованными. Экипаж спасли холодная голова и быстрый отход."
+      },
+      damaged: {
+        title: "Повреждённый борт",
+        className: "ending-mid",
+        image: images.damaged,
+        text: "Самолёт получил повреждения, но экипаж сумел довести его до аэродрома. Посадка тяжёлая, зато люди спасены."
+      },
+      crash: {
+        title: "Потеря самолёта",
+        className: "ending-bad",
+        image: images.destroyed,
+        text: "Слишком высокий риск и задержка в опасной зоне привели к провалу. На разборе главной ошибкой называют игнорирование предупреждений."
+      }
+    };
+
+    let state = resetState();
+    const game = document.getElementById("game");
+
+    function resetState() {
+      return {
+        missionId: null,
+        phase: "menu",
+        score: 0,
+        risk: 0,
+        fuel: 100,
+        hull: 100,
+        reputation: 0,
+        decisions: []
+      };
+    }
+
+    function renderMenu() {
+      state = resetState();
+      handlePhaseAudio();
+      game.innerHTML = `
+        <section class="grid">
+          ${Object.entries(missions).map(([id, mission]) => `
+            <article class="card">
+              <img src="${mission.image}" alt="${mission.title}">
+              <div class="card-body">
+                <h2>${mission.title}</h2>
+                <p>${mission.intro}</p>
+                <button onclick="startMission('${id}')">Начать</button>
+              </div>
+            </article>
+          `).join("")}
+        </section>
+      `;
+    }
+
+    function startMission(id) {
+      stopAllSounds();
+      state = resetState();
+      state.missionId = id;
+      state.phase = "briefing";
+      renderScene();
+    }
+
+    function applyChoice(label, changes, nextPhase) {
+      state.score += changes.score || 0;
+      state.risk += changes.risk || 0;
+      state.fuel += changes.fuel || 0;
+      state.hull += changes.hull || 0;
+      state.reputation += changes.reputation || 0;
+
+      state.fuel = Math.max(0, Math.min(100, state.fuel));
+      state.hull = Math.max(0, Math.min(100, state.hull));
+
+      state.decisions.push(label);
+      state.phase = nextPhase;
+      stopAllSounds();
+      renderScene();
+    }
+
+    function getEndingKey() {
+      if (state.hull <= 20 || state.risk >= 11 || state.fuel <= 5) return "crash";
+      if (state.hull <= 55 || state.risk >= 8) return "damaged";
+      if (state.score >= 7 && state.risk <= 4 && state.hull >= 80) return "perfect";
+      return "hard";
+    }
+
+    function getLandingImage() {
+      const key = getEndingKey();
+      if (key === "damaged") return images.belly;
+      if (key === "crash") return images.destroyed2;
+      return missions[state.missionId].landingImage;
+    }
+
+    function timeline() {
+      return `
+        <div class="timeline">
+          ${phaseOrder.map(phase => `
+            <div class="phase ${phase === state.phase ? "active" : ""}">${phaseNames[phase]}</div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function stats() {
+      return `
+        <div class="stats">
+          <div class="stat"><span>Результат</span><b>${state.score}</b></div>
+          <div class="stat"><span>Риск</span><b>${state.risk}</b></div>
+          <div class="stat"><span>Топливо</span><b>${state.fuel}%</b></div>
+          <div class="stat"><span>Состояние</span><b>${state.hull}%</b></div>
+          <div class="stat"><span>Репутация</span><b>${state.reputation}</b></div>
+        </div>
+      `;
+    }
+
+    function renderScene() {
+      if (state.phase === "debriefing") return renderEnding();
+
+      const mission = missions[state.missionId];
+
+      const scenes = {
+        briefing: {
+          title: "Брифинг",
+          image: mission.image,
+          text: mission.intro + " Командир напоминает: главный приоритет — вернуться домой.",
+          choices: [
+            ["Осторожный план", "Больше времени на подготовку и безопасный отход.", { score: 2, risk: 0, fuel: -5, reputation: 1 }, "takeoff"],
+            ["Быстрый план", "Экономия времени, но меньше запаса на ошибки.", { score: 1, risk: 1, fuel: 0, reputation: 1 }, "takeoff"],
+            ["Ставка на эффект", "Красиво на бумаге, но риск заметно выше.", { score: 0, risk: 2, fuel: 0, reputation: 2 }, "takeoff"],
+            ["Минимум обсуждений", "Экипаж готовится в спешке.", { score: 0, risk: 3, fuel: 0, reputation: -1 }, "takeoff"]
+          ]
+        },
+        takeoff: {
+          title: "Взлёт",
+          image: images.takeoff2,
+          text: "Самолёт выходит на полосу. Погода терпимая, но обстановка впереди непредсказуемая. В кабине гудит аппаратура, штурман сверяет маршрут, а диспетчер даёт разрешение на взлёт.",
+          choices: [
+            ["Спокойный взлёт", "Без лишней нагрузки на машину.", { score: 2, risk: 0, fuel: -8, hull: 0 }, "route"],
+            ["Быстрый набор", "Вы быстрее выходите на маршрут.", { score: 1, risk: 1, fuel: -10, hull: 0 }, "route"],
+            ["Резкий профиль", "Впечатляюще, но техника не любит грубости.", { score: 1, risk: 2, fuel: -12, hull: -5 }, "route"],
+            ["Игнорировать предупреждение", "Панель сигналит, но вы продолжаете.", { score: 0, risk: 3, fuel: -10, hull: -10 }, "route"]
+          ]
+        },
+        route: {
+          title: "Маршрут",
+          image: images.drop,
+          text: "До района остаётся немного. Нужно выбрать, как пройти финальный участок.",
+          choices: [
+            ["Обходной путь", "Дольше, зато спокойнее.", { score: 2, risk: 0, fuel: -16 }, "contact"],
+            ["Средний маршрут", "Баланс скорости и осторожности.", { score: 1, risk: 1, fuel: -12 }, "contact"],
+            ["Короткий путь", "Быстро, но тревожно.", { score: 1, risk: 2, fuel: -9 }, "contact"],
+            ["Прямой проход", "Почти без запаса на ошибку.", { score: 0, risk: 4, fuel: -7, hull: -5 }, "contact"]
+          ]
+        },
+        contact: {
+          title: "Контакт",
+          image: mission.threatImage,
+          text: mission.threat,
+          choices: [
+            ["Сразу уходить", "Вы не спорите с предупреждениями.", { score: 2, risk: 0, fuel: -8, reputation: 1 }, "radio"],
+            ["Манёвр и ловушки", "Напряжённо, но контролируемо.", { score: 1, risk: 1, fuel: -10, hull: -5 }, "radio"],
+            ["Дожать задачу", "Результат выше, но риск резко растёт.", { score: 2, risk: 3, fuel: -12, hull: -15, reputation: 1 }, "radio"],
+            ["Остаться в зоне", "Самый опасный вариант.", { score: 0, risk: 5, fuel: -14, hull: -30, reputation: -2 }, "radio"]
+          ]
+        },
+        radio: {
+          title: "Радиопереговоры",
+          image: state.risk >= 7 ? images.damaged : images.flares2,
+          text: "После сигнала угрозы экипаж выходит на связь с диспетчером. В кабине слышны предупреждения, короткие фразы штурмана и спокойный голос командира. Сейчас важнее всего не спорить с ситуацией, а сохранить управление и уйти из опасного района.",
+          choices: [
+            ["Доложить спокойно", "Чёткий доклад снижает хаос в кабине.", { score: 2, risk: 0, reputation: 1 }, "consequences"],
+            ["Запросить запасной аэродром", "Осторожное решение при неопределённости.", { score: 1, risk: 0, fuel: -4, reputation: 1 }, "consequences"],
+            ["Спорить с диспетчером", "Экипаж теряет драгоценные секунды.", { score: 0, risk: 2, fuel: -4, reputation: -1 }, "consequences"],
+            ["Отключиться от эфира", "Меньше информации, больше хаоса.", { score: 0, risk: 3, hull: -8, reputation: -2 }, "consequences"]
+          ]
+        },
+        consequences: {
+          title: "Последствия",
+          image: state.risk >= 7 ? images.damaged : images.flares,
+          text: "После контакта становится ясно, насколько удачными были прошлые решения. Машина отвечает на команды, но запас прочности не бесконечен.",
+          choices: [
+            ["Проверить системы", "Вы тратите время, но снижаете шанс ошибки.", { score: 2, risk: 0, fuel: -8, hull: 5 }, "landing"],
+            ["Идти домой", "Нормальный вариант при рабочем состоянии борта.", { score: 1, risk: 1, fuel: -6 }, "landing"],
+            ["Дотянуть на скорости", "Быстрее, но грубее для машины.", { score: 1, risk: 2, fuel: -9, hull: -8 }, "landing"],
+            ["Сделать лишний круг", "Ненужная задержка в опасной обстановке.", { score: 0, risk: 4, fuel: -18, hull: -12 }, "landing"]
+          ]
+        },
+        landing: {
+          title: "Посадка",
+          image: getLandingImage(),
+          text: "Аэродром впереди. Внизу видна полоса, диспетчер держит связь, а экипаж внимательно следит за скоростью и состоянием машины. Теперь важно не испортить всё на последнем этапе.",
+          choices: [
+            ["Штатная посадка", "Подходит, если борт в хорошем состоянии.", { score: 2, risk: 0, fuel: -5 }, "debriefing"],
+            ["Посадка с запасом", "Длиннее и осторожнее.", { score: 2, risk: 0, fuel: -8, reputation: 1 }, "debriefing"],
+            ["Жёсткая посадка", "Быстро, но риск повреждений выше.", { score: 1, risk: 2, fuel: -4, hull: -12 }, "debriefing"],
+            ["Тянуть до последнего", "Опасная попытка выиграть секунды.", { score: 0, risk: 4, fuel: -10, hull: -25 }, "debriefing"]
+          ]
+        }
+      };
+
+      const scene = scenes[state.phase];
+
+      game.innerHTML = `
+        <div class="topbar">
+          <span class="badge">${mission.title}</span>
+          <button class="secondary" onclick="renderMenu()">В меню</button>
+        </div>
+        ${timeline()}
+        <section class="panel">
+          <img class="scene-image" src="${scene.image}" alt="${scene.title}">
+          <div class="panel-body">
+            <h2>${scene.title}</h2>
+            <p>${scene.text}</p>
+            ${state.phase === "radio" ? `
+              <div class="radio-box">
+                <b>Штурман:</b> Есть предупреждение, работаем спокойно.<br>
+                <b>Командир:</b> Принял. Контроль систем, доклад диспетчеру.<br>
+                <b>Диспетчер:</b> Борт, подтвердите состояние. Рекомендую выход из района.<br>
+                <b>Командир:</b> Борт на управлении. Выполняем отход, запрашиваем коридор на возвращение.<br>
+                <b>Диспетчер:</b> Коридор подтверждён. При повреждениях — запасной аэродром.
+              </div>
+            ` : ""}
+            ${stats()}
+            <div class="choices">
+              ${scene.choices.map(choice => `
+                <button class="choice" onclick='applyChoice(${JSON.stringify(choice[0])}, ${JSON.stringify(choice[2])}, ${JSON.stringify(choice[3])})'>
+                  <strong>${choice[0]}</strong>
+                  ${choice[1]}
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        </section>
+      `;
+      handlePhaseAudio();
+    }
+
+    function renderEnding() {
+      stopAllSounds();
+      const mission = missions[state.missionId];
+      const endingKey = getEndingKey();
+      const ending = endings[endingKey];
+      const finalImage = endingKey === "perfect" ? mission.landingImage : ending.image;
+
+      game.innerHTML = `
+        <div class="topbar">
+          <span class="badge">Разбор: ${mission.title}</span>
+          <button class="secondary" onclick="renderMenu()">В меню</button>
+        </div>
+        ${timeline()}
+        <section class="panel">
+          <img class="scene-image" src="${finalImage}" alt="${ending.title}">
+          <div class="panel-body">
+            <h2 class="ending-title ${ending.className}">${ending.title}</h2>
+            <p>${ending.text}</p>
+            ${stats()}
+            <div class="log">
+              <b>Маршрут решений:</b><br>
+              ${state.decisions.length ? state.decisions.join(" → ") : "Решений пока нет"}
+            </div>
+            <h3>Оценка командира</h3>
+            <p>${getCommanderComment(endingKey)}</p>
+            <div class="footer-actions">
+              <button onclick="startMission('${state.missionId}')">Переиграть миссию</button>
+              <button class="secondary" onclick="renderMenu()">Выбрать другую миссию</button>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function getCommanderComment(key) {
+      if (key === "perfect") return "Хорошая работа. Вы не путали смелость с безрассудством и сохранили экипаж.";
+      if (key === "hard") return "Задача выполнена, но в следующий раз меньше риска. Машина и экипаж важнее красивого финала.";
+      if (key === "damaged") return "Вернулись — уже хорошо. Но повреждения показывают: несколько решений надо было принимать раньше.";
+      return "Разбор жёсткий: предупреждения нельзя игнорировать, а лишний риск быстро превращается в потерю.";
+    }
+
+    renderMenu();
+  </script>
+</body>
+</html>
